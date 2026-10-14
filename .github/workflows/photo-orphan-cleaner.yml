@@ -1,0 +1,35 @@
+name: photo-orphan-cleaner
+
+on:
+  push:
+    paths:
+      - "photo-orphan-cleaner/**"
+      - ".github/workflows/photo-orphan-cleaner.yml"
+  pull_request:
+    paths:
+      - "photo-orphan-cleaner/**"
+      - ".github/workflows/photo-orphan-cleaner.yml"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: photo-orphan-cleaner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: python -m pip install -r requirements-build.txt
+      - name: Unit tests (including the real Recycle Bin call)
+        run: python -m unittest discover -s tests -v
+      - name: Build exe
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name PhotoOrphanCleaner PhotoOrphanCleaner.pyw
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhotoOrphanCleaner-windows
+          path: photo-orphan-cleaner/dist/PhotoOrphanCleaner.exe
